@@ -28,12 +28,12 @@ func main() {
 	var u8 = Unit{"8", "1"}
 
 	units := []Unit{u1, u2, u3, u4, u5, u6, u7, u8}
-	MakeMap(units, "/")
-	BFS(units)
+	MakeMap(units)
+	BFS()
 
 }
 
-func BFS(units []Unit) Node {
+func BFS() Node {
 	var root = Unit{"/", ""}
 	fmt.Println(Unitsmap)
 	var node Node
@@ -42,21 +42,24 @@ func BFS(units []Unit) Node {
 	node.Unit = root
 	fmt.Println(queue)
 
-	PutToNodeFromQueue(&node, &queue)
+	PutToNodeFromQueue(queue.Peek(), &queue, &node)
 	fmt.Println(node)
 
 	return node
 }
 
-func MakeMap(units []Unit, parentId string) {
-	for _, uu := range units {
+func MakeMap(units []Unit) {
 
+	for _, uu := range units {
+		if HasNo(Unitsmap[uu.ParentId], uu) {
+			Unitsmap[uu.ParentId] = append(Unitsmap[uu.ParentId], uu)
+		}
 		for _, u := range units {
-			if parentId == u.ParentId && HasNo(Unitsmap[parentId], u) {
-				Unitsmap[parentId] = append(Unitsmap[parentId], u)
+			if uu.Id == u.ParentId && HasNo(Unitsmap[u.ParentId], u) {
+				Unitsmap[u.ParentId] = append(Unitsmap[u.ParentId], u)
 			}
 		}
-		parentId = uu.ParentId
+		//parentId = uu.ParentId
 	}
 
 }
@@ -85,7 +88,7 @@ func (queue *Queue) Peek() Unit {
 		x = queue.values[0]
 	} else {
 		x.Id = "nil"
-		x.ParentId = "nil"
+		x.ParentId = "niladasdasd"
 	}
 
 	return x
@@ -93,9 +96,7 @@ func (queue *Queue) Peek() Unit {
 
 func PutToQoueue(ParentId string, queue *Queue, iterator int) {
 	for _, u := range Unitsmap[ParentId] {
-		if HasNo(queue.values, u) {
-			queue.Push(u)
-		}
+		queue.Push(u)
 	}
 	iterator++
 	if iterator < len(queue.values) {
@@ -103,23 +104,29 @@ func PutToQoueue(ParentId string, queue *Queue, iterator int) {
 	}
 }
 
-func PutToNodeFromQueue(node *Node, queue *Queue) {
-	iterator := -1
+func PutToNodeFromQueue(u Unit, queue *Queue, node *Node) {
+	iterator := 0
 	tempNode := Node{}
 	check := true
 	for check {
-		if queue.Peek().ParentId == node.Unit.Id {
+		if node.Unit.Id == queue.Peek().ParentId {
 			tempNode.Unit = queue.Pop()
 			node.Children = append(node.Children, tempNode)
-			fmt.Println(node)
+			//fmt.Println(node)
 		} else {
 			check = false
 		}
+
 	}
-	iterator++
-	for iterator < len(queue.values) {
-		if len(node.Children) > 0 {
-			PutToNodeFromQueue(&node.Children[iterator], queue)
+	for iterator < len(node.Children) && len(queue.values) > 0 {
+		if len(node.Children) > 0 && queue.Peek().ParentId == node.Unit.Id {
+			//todo:заменить 124 строку чтоб отправлять не ребенка а пик из queue
+			PutToNodeFromQueue(queue.Peek(), queue, &node.Children[iterator])
+			iterator++
+		} else {
+			PutToNodeFromQueue(queue.Peek(), queue, node)
+
 		}
 	}
+
 }
